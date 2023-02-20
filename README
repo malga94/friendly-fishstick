@@ -1,0 +1,5 @@
+The idea is to build a SQL engine using Python. 
+
+I want to implement the basic SQL commands, both DDL (CREATE TABLE) and DQL (SELECT, JOIN, WHERE)
+I will need a lexer to parse the SQL script (I'd like to make an interactive shell as well), and return the relevant information or create new objects.
+The idea for now is to represent tables as instances of a dataclass
