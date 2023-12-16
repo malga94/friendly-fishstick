@@ -1,5 +1,6 @@
 import re
-from config.constants import CREATE, SELECT, FROM, WHERE, TYPES, INVALID
+from typing import Callable
+from config.constants import CREATE, SELECT, FROM, WHERE, TYPES, SCHEMA, INVALID
 
 def lexer(command: str) -> str:
 	command = command.strip()
@@ -11,16 +12,28 @@ def lexer(command: str) -> str:
 		tname, filters = handle_select(command)
 		return SELECT, tname, filters
 
+	if command[:6].upper() == SCHEMA:
+		tnames = handle_schema(command)
+		return SCHEMA, tnames
+
 	else:
 		return INVALID, None, None
 
 def handle_create(command: str) -> tuple[str, str, list[str]]:
 	
 	name_pattern = r'(\w* ){2}(\w*)'
-	tname = re.search(name_pattern, command).group(2)
+	try:
+		tname = re.search(name_pattern, command).group(2)
+	except AttributeError:
+		print("Invalid syntax: must provide table name")
+		return None, None
 	
 	pattern = r'\(([\s]*[a-z][^,]*,)*([\s]*[a-z][^,]*)'
-	columns = re.search(pattern, command).group().replace('(','').replace(')','').replace('\n','')
+	try:
+		columns = re.search(pattern, command).group().replace('(','').replace(')','').replace('\n','')
+	except AttributeError:
+		print("Invalid syntax: must provide at least one column")
+		return None, None
 	columns = ' '.join(columns.split()) #Replace multiple whitespace with single whitespace
 	schema = {}
 	
@@ -28,7 +41,8 @@ def handle_create(command: str) -> tuple[str, str, list[str]]:
 		
 		name, type = col.strip().split(' ')
 		if type not in TYPES.keys():
-			raise TypeError(f'Invalid type {type}')
+			print(f"Invalid type {type}")
+			return None, None
 		schema[name] = type
 	
 	return tname, schema	
@@ -36,3 +50,6 @@ def handle_create(command: str) -> tuple[str, str, list[str]]:
 def handle_select(command: str) -> tuple[str, str, list[str]]:
 	pass 
 
+def handle_schema(command: str) -> tuple[str, list[str]]:
+	tnames = [name.strip() for name in command.split(' ')[1:]]
+	return tnames
